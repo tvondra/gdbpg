@@ -233,8 +233,10 @@ def format_node(node, indent=0):
 		node = cast(node, 'RestrictInfo')
 
 		retval = '''RestrictInfo (pushed_down=%(push_down)s can_join=%(can_join)s delayed=%(delayed)s)
-	%(clause)s''' % {
+%(clause)s
+%(orclause)s''' % {
 			'clause' : format_node(node['clause'], 1),
+			'orclause' : format_node(node['orclause'], 1),
 			'push_down' : (int(node['is_pushed_down']) == 1),
 			'can_join' : (int(node['can_join']) == 1),
 			'delayed' : (int(node['outerjoin_delayed']) == 1)
@@ -244,13 +246,15 @@ def format_node(node, indent=0):
 
 		node = cast(node, 'OpExpr')
 
-		retval = '''OpExpr (opno=%(opno)d)
-	%(args)s''' % {
-				'opno' : node['opno'],
-				'args' : format_node_list(node['args'], 1, True)
-			}
-
 		retval = format_op_expr(node)
+
+	elif is_a(node, 'BoolExpr'):
+
+		node = cast(node, 'BoolExpr')
+
+		print node
+
+		retval = format_bool_expr(node)
 
 	else:
 		# default - just print the type name
@@ -313,6 +317,17 @@ def format_planned_stmt(plan, indent=0):
 
 	return add_indent(retval, indent)
 
+def format_op_expr(node, indent=0):
+
+	return """OpExpr [opno=%(opno)s]
+%(clauses)s""" % {	'opno' : node['opno'],
+					'clauses' : format_node_list(node['args'], 1, True)}
+
+def format_bool_expr(node, indent=0):
+
+	return """BoolExpr [op=%(op)s]
+%(clauses)s""" % {	'op' : node['boolop'],
+					'clauses' : format_node_list(node['args'], 1, True)}
 
 def is_a(n, t):
 	'''checks that the node has type 't' (just like IsA() macro)'''
